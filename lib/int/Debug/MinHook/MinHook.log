@@ -1,0 +1,7 @@
+﻿  buffer.c
+  hde32.c
+  hde64.c
+  hook.c
+  trampoline.c
+  Generazione del codice in corso...
+  MinHook.vcxproj -> C:\Users\righe\Documents\GitHub\menu-base\bin\lib\Debug\MinHook.lib
