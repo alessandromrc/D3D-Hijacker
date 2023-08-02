@@ -1,7 +1,7 @@
-﻿  dllmain.cpp
-  Generating code
-  36 of 148 functions (24.3%) were compiled, the rest were copied from previous compilation.
-    33 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
-  Finished generating code
-  LibraryHijacker.vcxproj -> C:\Users\righe\Desktop\LibraryHijacker\x64\Release\LibraryHijacker.dll
+﻿  pch.cpp
+  dllmain.cpp
+  Generazione codice in corso...
+  Previous IPDB was built with incompatible compiler, fall back to full compilation.
+  All 148 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Generazione codice terminata
+  LibraryHijacker.vcxproj -> C:\Users\user\Documents\GitHub\D3D-HIjacker\x64\Release\LibraryHijacker.dll

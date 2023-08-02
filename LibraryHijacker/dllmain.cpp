@@ -59,6 +59,34 @@ bool installHooks()
 	return true;
 }
 
+const char* mutexDetect = "hijackmutex1337";
+HANDLE hMutex;
+
+bool IsAlreadyInjected()
+{
+	hMutex = OpenMutexA(MUTEX_ALL_ACCESS, FALSE, mutexDetect);
+	if (hMutex)
+	{
+		CloseHandle(hMutex);
+		return true;
+	}
+
+	// The mutex does not exist, indicating the DLL is not injected yet
+	// Create the mutex to prevent further injections
+	HANDLE hNewMutex = CreateMutexA(NULL, TRUE, mutexDetect);
+	if (!hNewMutex)
+	{
+		// Failed to create mutex
+		// Handle the error appropriately
+	}
+
+	if (hNewMutex != 0)
+		CloseHandle(hNewMutex);
+
+	return false;
+}
+
+
 BOOL APIENTRY DllMain(HMODULE hModule,
 	DWORD  ul_reason_for_call,
 	LPVOID lpReserved
@@ -68,6 +96,12 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
+
+		if (IsAlreadyInjected())
+		{
+			MessageBoxA(NULL, "Do you want to crash your game? Seems like you like desktop!", "Injection Error", MB_ICONERROR);
+			return FALSE;
+		}
 		installHooks();
 		std::thread([]() {
 			if (hijacked)
@@ -76,6 +110,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 				{
 					MH_Uninitialize();
 					HMODULE hModule = GetModuleHandle(NULL);
+					ReleaseMutex(hMutex);
 					FreeLibraryAndExitThread(hModule, 0);
 				}
 			}
@@ -83,7 +118,9 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		break;
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
+		ReleaseMutex(hMutex);
 	case DLL_PROCESS_DETACH:
+		ReleaseMutex(hMutex);
 		break;
 	}
 	return TRUE;
