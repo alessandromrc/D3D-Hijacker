@@ -36,7 +36,7 @@ HMODULE WINAPI LoadLibraryA_replacement(_In_ LPCSTR lpFileName)
 		}
 	}
 
-	if (hijacked_dxgi == false) // avoid doing it again as our wrapper module might actually load real d3d11.dll!
+	if (hijacked_dxgi == false) // avoid doing it again as our wrapper module might actually load real dxgi.dll!
 	{
 		if (strstr(lpFileName, "dxgi") != nullptr || strstr(lpFileName, "DXGI"))
 		{
