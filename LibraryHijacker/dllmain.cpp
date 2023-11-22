@@ -6,10 +6,11 @@
 #include <CString>
 #include <atlstr.h>
 #include "../MinHook/include/MinHook.h"
-#include "pattern_sc.hpp"
+#include <mutex>
 
 bool hijacked_d3d11 = false;
 bool hijacked_dxgi = false;
+std::mutex g_mutex;
 
 typedef HMODULE(WINAPI* TYPE_LoadLibraryA)(LPCSTR);
 TYPE_LoadLibraryA g_loadLibraryA_original = NULL;
@@ -63,26 +64,20 @@ HMODULE WINAPI LoadLibraryA_replacement(_In_ LPCSTR lpFileName)
 	return g_loadLibraryA_original(lpFileName);
 }
 
-using namespace memory;
 
-bool installHooks()
-{
-	// Initialize MinHook.
-	if (MH_Initialize() != MH_OK)
-	{
-		return false;
+bool installHooks() {
+	if (MH_Initialize() != MH_OK) {
+		return false; // Proper error handling for MH_Initialize
 	}
-	if (MH_CreateHook(
-		(LPVOID)LoadLibraryA,
-		(LPVOID)LoadLibraryA_replacement,
-		(LPVOID*)&g_loadLibraryA_original
-	) != MH_OK)
-	{
-		return false;
+
+	if (MH_CreateHook(&LoadLibraryA, &LoadLibraryA_replacement, reinterpret_cast<LPVOID*>(&g_loadLibraryA_original)) != MH_OK) {
+		MH_Uninitialize();
+		return false; // Proper error handling for MH_CreateHook
 	}
-	if (MH_EnableHook((LPVOID)LoadLibraryA) != MH_OK)
-	{
-		return false;
+
+	if (MH_EnableHook(&LoadLibraryA) != MH_OK) {
+		MH_Uninitialize();
+		return false; // Proper error handling for MH_EnableHook
 	}
 
 	return true;
@@ -91,24 +86,22 @@ bool installHooks()
 BOOL APIENTRY DllMain(HMODULE hModule,
 	DWORD  ul_reason_for_call,
 	LPVOID lpReserved
-)
-{
-	HANDLE hProcess = GetCurrentProcess();
-	switch (ul_reason_for_call)
-	{
+) {
+	switch (ul_reason_for_call) {
 	case DLL_PROCESS_ATTACH:
-		installHooks();
-		std::thread([]() {
-			if (hijacked_d3d11 || hijacked_dxgi)
-			{
-				if (MH_DisableHook(MH_ALL_HOOKS) == MH_OK)
-				{
-					MH_Uninitialize();
-					HMODULE hModule = GetModuleHandle(NULL);
-					FreeLibraryAndExitThread(hModule, 0);
+		if (installHooks()) {
+			std::thread([]() {
+				std::this_thread::sleep_for(std::chrono::seconds(5)); // Adjust the delay if needed
+				std::lock_guard<std::mutex> lock(g_mutex);
+				if (hijacked_d3d11 || hijacked_dxgi) {
+					if (MH_DisableHook(MH_ALL_HOOKS) == MH_OK) {
+						MH_Uninitialize();
+						HMODULE hModule = GetModuleHandle(NULL);
+						FreeLibraryAndExitThread(hModule, 0);
+					}
 				}
-			}
-			}).detach();
+				}).detach();
+		}
 		break;
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
