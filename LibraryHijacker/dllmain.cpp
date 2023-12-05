@@ -30,8 +30,15 @@ HMODULE WINAPI LoadLibraryA_replacement(_In_ LPCSTR lpFileName)
 				{
 					*lastSlash = '\0';
 					strcat_s(dllPath, "\\d3d11.dll");
-					lpFileName = dllPath;
-					hijacked_d3d11 = true;
+					if (PathFileExistsA(dllPath))
+					{
+						lpFileName = dllPath;
+						hijacked_d3d11 = true;
+					}
+					else
+					{
+						lpFileName = "C:\\Windows\\System32\\d3d11.dll"; // Fallback to original d3d11.dll
+					}
 				}
 			}
 		}
